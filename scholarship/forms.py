@@ -46,10 +46,17 @@ class ExaminerCreationForm(forms.ModelForm):
         model = Examiner
         fields = ['nama', 'email', 'nomor_telepon']
         
+
+    def clean_username(self):
+        username = self.cleaned_data.get("username")
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("Username sudah digunakan. Silakan pilih username lain.")
+        return username
+
     def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if email and not email.endswith('@app.ocm'):
-            raise forms.ValidationError("Email harus menggunakan domain @app.ocm")
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Email sudah digunakan. Silakan gunakan email lain.")
         return email
 
     def save(self, commit=True):

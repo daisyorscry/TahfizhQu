@@ -1,0 +1,34 @@
+Login attempt: username=Enggal, next_url=None
+Auth failed for Enggal
+Login attempt: username=SUPERADMIN, next_url=
+Auth success for SUPERADMIN. Role=admin, Staff=True
+Login attempt: username=SUPERADMIN, next_url=
+Auth success for SUPERADMIN. Role=admin, Staff=True
+Login attempt: username=ANISA, next_url=
+Auth success for ANISA. Role=examiner, Staff=False
+Login attempt: username=Enggal, next_url=
+Auth success for Enggal. Role=student, Staff=False
+Login attempt: username=Elsa, next_url=
+Auth success for Elsa. Role=admin, Staff=True
+Login attempt: username=Elsa, next_url=
+Auth success for Elsa. Role=admin, Staff=True, Hero=True
+Login attempt: username=Elsa, next_url=
+Auth success for Elsa. Role=admin, Staff=True, Hero=True
+Login attempt: username=ANISA, next_url=
+Auth success for ANISA. Role=examiner, Staff=False, Hero=False
+Login attempt: username=Elsa, next_url=
+Auth success for Elsa. Role=admin, Staff=True, Hero=True
+Login attempt: username=Enggal, next_url=
+Auth success for Enggal. Role=student, Staff=False, Hero=False
+Login attempt: username=SUPERADMIN, next_url=
+Auth success for SUPERADMIN. Role=admin, Staff=True, Hero=True
+Login attempt: username=ANISA, next_url=
+Auth success for ANISA. Role=examiner, Staff=False, Hero=False
+Login attempt: username=ANISA, next_url=
+Auth success for ANISA. Role=examiner, Staff=False, Hero=False
+Login attempt: username=Elsa, next_url=
+Auth success for Elsa. Role=admin, Staff=True, Hero=True
+Login attempt: username=Enggal, next_url=
+Auth success for Enggal. Role=student, Staff=False, Hero=False
+Login attempt: username=Elsa, next_url=
+Auth success for Elsa. Role=admin, Staff=True, Hero=True

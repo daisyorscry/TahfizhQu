@@ -10,12 +10,10 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.html import strip_tags
 from .models import User, Student, Examiner, Group, Evaluation
-from .models import User, Student, Examiner, Group, Evaluation
 from .forms import EvaluationForm, AdminStudentCreationForm, StudentRegistrationForm, ScholarshipApplicationForm, ExaminerCreationForm
+from . import notifications
 
-# ... (existing imports)
 
-# ... (existing imports)
 
 def home(request):
     if request.user.is_authenticated:
@@ -33,6 +31,12 @@ def login_view(request):
         password = request.POST.get('password')
         next_url = request.POST.get('next')
 
+        log_file = '/home/elsa/TahfizhQu/login_debug.txt'
+
+        # Debug logging
+        with open(log_file, 'a') as f:
+            f.write(f"Login attempt: username={username}, next_url={next_url}\n")
+
         # Try to get the user first (without authenticating)
         User = get_user_model()
         try:
@@ -40,33 +44,51 @@ def login_view(request):
 
             # Check if email is verified
             if not user_obj.is_active:
+                with open(log_file, 'a') as f:
+                    f.write(f"User {username} is inactive\n")
                 messages.error(request, 'Akun Anda belum diverifikasi. Silakan cek email Anda dan klik link verifikasi terlebih dahulu.')
                 return render(request, 'scholarship/login.html')
         except User.DoesNotExist:
+            with open(log_file, 'a') as f:
+                f.write(f"User {username} does not exist\n")
             pass  # Will be caught by authenticate below
 
         # Authenticate user
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            with open(log_file, 'a') as f:
+                f.write(f"Auth success for {username}. Role={user.role}, Staff={user.is_staff}, Hero={user.is_superuser}\n")
             login(request, user)
             
-            # If there's a 'next' parameter, use it
-            if next_url:
+            # If there's a 'next' parameter, use it (highest priority)
+            if next_url and next_url.strip():
+                with open(log_file, 'a') as f:
+                    f.write(f"Redirecting to next: {next_url}\n")
                 return redirect(next_url)
 
-            # Redirect based on role / staff status
-            if user.is_staff or user.is_superuser:
+            # Redirection logic:
+            # 1. Superusers go to Django Admin by default unless they have an app role and came in through the app.
+            # 2. Users with specific app roles go to their dashboards.
+            
+            if user.is_superuser and not user.role == 'admin':
                 return redirect('/django-admin/')
-            elif user.role == 'student':
+                
+            if user.role == 'student':
                 return redirect('student_dashboard')
             elif user.role == 'examiner':
                 return redirect('examiner_dashboard')
             elif user.role == 'admin':
                 return redirect('admin_dashboard')
+            
+            # Fallback
+            if user.is_staff or user.is_superuser:
+                return redirect('/django-admin/')
             else:
                 return redirect('home')
         else:
+            with open(log_file, 'a') as f:
+                f.write(f"Auth failed for {username}\n")
             messages.error(request, 'Username atau password salah.')
             return render(request, 'scholarship/login.html')
 
@@ -187,7 +209,7 @@ def apply_scholarship(request):
 
 @login_required
 def verification_list(request):
-    if request.user.role != 'admin':
+    if request.user.role != 'admin' and not request.user.is_superuser:
         return redirect('home')
     
     # Students who have applied (have Student profile) but not verified
@@ -201,7 +223,7 @@ def verification_list(request):
 
 @login_required
 def verify_student(request, student_id):
-    if request.user.role != 'admin':
+    if request.user.role != 'admin' and not request.user.is_superuser:
         return redirect('home')
     
     student = get_object_or_404(Student, id=student_id)
@@ -212,6 +234,10 @@ def verify_student(request, student_id):
     student.user.is_active = True
     student.user.save()
     messages.success(request, f'Student {student.nama} has been verified.')
+    
+    # Send Notification Email
+    notifications.send_verification_approved_email(student)
+    
     return redirect('verification_list')
 
 
@@ -255,7 +281,7 @@ def examiner_dashboard(request):
 
 @login_required
 def admin_dashboard(request):
-    if request.user.role != 'admin':
+    if request.user.role != 'admin' and not request.user.is_superuser:
         return redirect('home')
     students = Student.objects.all()
     groups = Group.objects.all()
@@ -267,9 +293,8 @@ def admin_dashboard(request):
     })
 
 @login_required
-@login_required
 def create_examiner(request):
-    if request.user.role != 'admin':
+    if request.user.role != 'admin' and not request.user.is_superuser:
         return redirect('home')
     
     if request.method == 'POST':
@@ -285,7 +310,7 @@ def create_examiner(request):
 
 @login_required
 def create_group(request):
-    if request.user.role != 'admin':
+    if request.user.role != 'admin' and not request.user.is_superuser:
         return redirect('home')
     
     # Filter Logic
@@ -320,6 +345,11 @@ def create_group(request):
             gmeet_link=gmeet_link
         )
         group.members.set(Student.objects.filter(id__in=student_ids))
+        
+        # Send Notification Emails to all members
+        for student in group.members.all():
+            notifications.send_group_assignment_email(group, student)
+            
         messages.success(request, 'Group created.')
         return redirect('admin_dashboard')
         
@@ -362,6 +392,10 @@ def evaluate_student(request, student_id):
             evaluation.student = student
             evaluation.examiner = examiner
             evaluation.save()
+            
+            # Send Notification Email
+            notifications.send_evaluation_complete_email(evaluation)
+            
             messages.success(request, 'Evaluation submitted.')
             return redirect('examiner_dashboard')
     
@@ -372,10 +406,16 @@ def evaluate_student(request, student_id):
 
 @login_required
 def announce_results(request):
-    if request.user.role != 'admin':
+    if request.user.role != 'admin' and not request.user.is_superuser:
         return redirect('home')
     # Publish results
     Evaluation.objects.all().update(is_published=True)
+    
+    # Send Notification Emails for each student
+    evaluations = Evaluation.objects.filter(is_published=True)
+    for evaluation in evaluations:
+        notifications.send_final_result_email(evaluation)
+        
     messages.success(request, 'Results announced successfully.')
     return redirect('admin_dashboard')
 

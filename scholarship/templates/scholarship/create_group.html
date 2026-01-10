@@ -18,10 +18,10 @@
                 <select name="filter_type"
                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border">
                     <option value="">-- Pilih --</option>
-                    <option value="semester" {% if request.GET.filter_type=='semester' %}selected{% endif %}>Semester
+                    <option value="semester" {% if request.GET.filter_type == 'semester' %}selected{% endif %}>Semester
                     </option>
-                    <option value="juz" {% if request.GET.filter_type=='juz' %}selected{% endif %}>Jumlah Juz</option>
-                    <option value="nim" {% if request.GET.filter_type=='nim' %}selected{% endif %}>Urutkan NIM</option>
+                    <option value="juz" {% if request.GET.filter_type == 'juz' %}selected{% endif %}>Jumlah Juz</option>
+                    <option value="nim" {% if request.GET.filter_type == 'nim' %}selected{% endif %}>Urutkan NIM</option>
                 </select>
             </div>
             <div>
