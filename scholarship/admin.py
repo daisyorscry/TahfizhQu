@@ -1,10 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from unfold.admin import ModelAdmin
-from unfold.forms import UserChangeForm, UserCreationForm
+from unfold.decorators import action
+from import_export.admin import ImportMixin, ExportMixin
+from unfold.contrib.import_export.forms import ExportForm, ImportForm
+from unfold.forms import UserChangeForm, UserCreationForm, AdminPasswordChangeForm
 from django.utils.safestring import mark_safe
 from django.urls import reverse
+from django.shortcuts import redirect
 from .models import User, Student, Examiner, Group, Evaluation
+from .resources import StudentResource, ExaminerResource
 
 class StudentInline(admin.StackedInline):
     model = Student
@@ -22,12 +27,30 @@ class ExaminerInline(admin.StackedInline):
 class UserAdmin(BaseUserAdmin, ModelAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
     list_display = ("username", "email", "role", "is_active", "is_staff")
     list_filter = ("role", "is_active", "is_staff")
+    search_fields = ("username", "email")
     
-    fieldsets = BaseUserAdmin.fieldsets + (
-        (None, {"fields": ("role",)}),
+    # Custom fieldsets to ensure password change is clear and role is included
+    fieldsets = (
+        (None, {"fields": ("username", "password")}),
+        ("Informasi Pribadi", {"fields": ("first_name", "last_name", "email", "role")}),
+        (
+            "Izin & Akses",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
+        ("Riwayat", {"fields": ("last_login", "date_joined")}),
     )
+    
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         (None, {"fields": ("role",)}),
     )
@@ -62,30 +85,48 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     deactivate_users.icon = "cancel"
 
 @admin.register(Student)
-class StudentAdmin(ModelAdmin):
+class StudentAdmin(ImportMixin, ExportMixin, ModelAdmin):
+    resource_class = StudentResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('nama', 'nim', 'semester', 'jumlah_hafalan', 'is_verified', 'status_seleksi', 'change_password_link')
     search_fields = ('nama', 'nim', 'user__username', 'email')
     list_filter = ('is_verified', 'status_seleksi', 'semester', 'jumlah_hafalan')
     compressed_fields = True 
     list_filter_sheet = True 
+    actions_list = ["download_template_action"]
+
+    @action(description="Unduh Template CSV", icon="download")
+    def download_template_action(self, request):
+        return redirect("download_student_template")
 
     def change_password_link(self, obj):
         if obj.user:
             url = reverse("admin:scholarship_user_change", args=[obj.user.id]) + "password/"
-            return mark_safe(f'<a href="{url}" class="bg-primary-600 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-primary-700 transition">Ubah Password</a>')
+            return mark_safe(f'<a href="{url}" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">🔑 Ubah Sandi</a>')
         return "-"
     change_password_link.short_description = "Aksi Akun"
 
 @admin.register(Examiner)
-class ExaminerAdmin(ModelAdmin):
+class ExaminerAdmin(ImportMixin, ExportMixin, ModelAdmin):
+    resource_class = ExaminerResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('nama', 'email', 'nomor_telepon', 'user', 'change_password_link')
     search_fields = ('nama', 'email', 'user__username')
     list_filter = ('groups',)
+    compressed_fields = True
+    list_filter_sheet = True
+    actions_list = ["download_template_action"]
+
+    @action(description="Unduh Template CSV", icon="download")
+    def download_template_action(self, request):
+        return redirect("download_examiner_template")
 
     def change_password_link(self, obj):
         if obj.user:
             url = reverse("admin:scholarship_user_change", args=[obj.user.id]) + "password/"
-            return mark_safe(f'<a href="{url}" class="bg-primary-600 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-primary-700 transition">Ubah Password</a>')
+            return mark_safe(f'<a href="{url}" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">🔑 Ubah Sandi</a>')
         return "-"
     change_password_link.short_description = "Aksi Akun"
 
@@ -94,6 +135,7 @@ class GroupAdmin(ModelAdmin):
     list_display = ('nama_group', 'examiner', 'get_member_count')
     search_fields = ('nama_group', 'examiner__nama')
     filter_horizontal = ('members',)
+    compressed_fields = True
     
     def get_member_count(self, obj):
         return obj.members.count()
@@ -105,3 +147,6 @@ class EvaluationAdmin(ModelAdmin):
     list_filter = ('is_published', 'examiner', 'created_at')
     search_fields = ('student__nama', 'examiner__nama')
     readonly_fields = ('wsm_score',)
+    compressed_fields = True
+    list_filter_sheet = True
+

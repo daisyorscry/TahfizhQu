@@ -69,9 +69,10 @@ class Evaluation(models.Model):
 
     # WSM Weights
     WEIGHTS = {
+        'hafal dengan baik': 0.20,
         'makhorijul_huruf': 0.20,
         'tajwid': 0.20,
-        'lancar': 0.20,
+        'kelancar': 0.20,
         'jumlah_hafalan': 0.20,
         'ipk': 0.20
     }

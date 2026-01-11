@@ -17,4 +17,6 @@ urlpatterns = [
     path('examiner/evaluate/<int:student_id>/', views.evaluate_student, name='evaluate_student'),
     path('admin/announce/', views.announce_results, name='announce_results'),
     path('activate/<uidb64>/<token>/', views.activate, name='activate'),
+    path('admin/template/student/', views.download_student_template, name='download_student_template'),
+    path('admin/template/examiner/', views.download_examiner_template, name='download_examiner_template'),
 ]

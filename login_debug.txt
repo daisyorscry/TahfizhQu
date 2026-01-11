@@ -32,3 +32,15 @@ Login attempt: username=Enggal, next_url=
 Auth success for Enggal. Role=student, Staff=False, Hero=False
 Login attempt: username=Elsa, next_url=
 Auth success for Elsa. Role=admin, Staff=True, Hero=True
+Login attempt: username=Elsa, next_url=
+Auth success for Elsa. Role=admin, Staff=True, Hero=True
+Login attempt: username=Elsa, next_url=
+Auth success for Elsa. Role=admin, Staff=True, Hero=True
+Login attempt: username=ANISA, next_url=
+Auth success for ANISA. Role=examiner, Staff=False, Hero=False
+Login attempt: username=Enggal, next_url=
+Auth success for Enggal. Role=student, Staff=False, Hero=False
+Login attempt: username=ANISA, next_url=
+Auth success for ANISA. Role=examiner, Staff=False, Hero=False
+Login attempt: username=Elsa, next_url=
+Auth success for Elsa. Role=admin, Staff=True, Hero=True

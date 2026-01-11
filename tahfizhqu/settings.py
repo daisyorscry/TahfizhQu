@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'import_export',
     'scholarship',
 ]
 
@@ -137,17 +138,17 @@ UNFOLD = {
     "SITE_URL": "/",
     "COLORS": {
         "primary": {
-            "50": "239 246 255",
-            "100": "219 234 254",
-            "200": "191 219 254",
-            "300": "147 197 253",
-            "400": "96 165 250",
-            "500": "59 130 246",
-            "600": "37 99 235",
-            "700": "29 78 216",
-            "800": "30 64 175",
-            "900": "30 58 138",
-            "950": "23 37 84",
+            "50": "236 253 245",
+            "100": "209 250 229",
+            "200": "167 243 208",
+            "300": "110 231 183",
+            "400": "52 211 153",
+            "500": "16 185 129",
+            "600": "5 150 105",
+            "700": "4 120 87",
+            "800": "6 95 70",
+            "900": "6 77 62",
+            "950": "2 44 34",
         },
     },
     "TABS": [
@@ -168,6 +169,22 @@ UNFOLD = {
         "show_search": True,
         "show_all_applications": True,
         "navigation": [
+            {
+                "title": "Navigasi Utama",
+                "items": [
+                    {
+                        "title": "Dashboard Pengelola",
+                        "icon": "dashboard",
+                        "link": "/admin/dashboard/",
+                        "permission": lambda request: request.user.is_superuser or request.user.role == 'admin',
+                    },
+                    {
+                        "title": "Halaman Depan",
+                        "icon": "home",
+                        "link": "/",
+                    },
+                ],
+            },
             {
                 "title": "Manajemen Pengguna",
                 "items": [

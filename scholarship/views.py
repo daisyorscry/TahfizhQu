@@ -419,6 +419,39 @@ def announce_results(request):
     messages.success(request, 'Results announced successfully.')
     return redirect('admin_dashboard')
 
+import csv
+from django.http import HttpResponse
+
+@login_required
+def download_student_template(request):
+    if request.user.role != 'admin' and not request.user.is_superuser:
+        return redirect('home')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="template_mahasiswa.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['username', 'nama', 'email', 'nim', 'kampus', 'asal_sekolah', 'fakultas', 'jurusan', 'jumlah_hafalan', 'ipk', 'semester', 'tanggal_lahir', 'status_seleksi'])
+    # Optional: add a sample row
+    writer.writerow(['mahasiswa1', 'Nama Mahasiswa', 'mhs1@example.com', '12345678', 'UMJ', 'SMAN 1', 'FT', 'Informatika', '5', '3.50', '3', '2004-01-01', 'Proses'])
+    
+    return response
+
+@login_required
+def download_examiner_template(request):
+    if request.user.role != 'admin' and not request.user.is_superuser:
+        return redirect('home')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="template_penguji.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['username', 'nama', 'email', 'nomor_telepon'])
+    # Optional: add a sample row
+    writer.writerow(['penguji1', 'Nama Penguji', 'penguji1@example.com', '08123456789'])
+    
+    return response
+
 def activate(request, uidb64, token):
     User = get_user_model()
     try:
