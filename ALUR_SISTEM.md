@@ -1,80 +1,90 @@
 # Alur Sistem TahfizhQu (System Workflow)
 
-Dokumen ini menjelaskan alur lengkap penggunaan aplikasi TahfizhQu menggunakan **Satu Pintu Admin Dashboard** dan **Verifikasi Email Mandiri**.
-
-## 1. Role (Peran Pengguna)
-Sistem memiliki 4 entitas pengguna:
-- **Admin (Panitia)**: Pengelola operasional beasiswa (Dashboard `/admin/dashboard/`).
-- **Superuser (IT System)**: Pengelola teknis basis data (Dashboard `/django-admin/`).
-- **Student (Mahasiswa)**: Pendaftar beasiswa.
-- **Examiner (Penguji)**: Dosen/Ustadz yang melakukan penilaian hafalan.
+Dokumen ini menjelaskan alur lengkap penggunaan aplikasi TahfizhQu menggunakan **Multi-Dashboard Support** (Admin Dashboard, Examiner Dashboard, Student Dashboard, dan Super Admin/Django Admin).
 
 ---
 
-## 2. Alur Registrasi & Aktivasi Akun (Student)
-Sistem menggunakan verifikasi email otomatis untuk memastikan validitas pendaftar.
+## 1. Peran Pengguna (Roles)
+Sistem memiliki 4 entitas pengguna dengan hak akses yang berbeda:
 
-1. **Mahasiswa Mendaftar** (`/register`):
-   - Mengisi Username, Email, dan Password.
-   - **Status Akun**: `Inactive` (Belum bisa login).
-   - Sistem mengirimkan email aktivasi (dikirim via terminal di lingkungan dev).
-2. **Aktivasi Mandiri**:
-   - Mahasiswa mengklik link aktivasi dari email.
-   - **Status Akun**: `Active` (Dapat login).
+- **Super Admin (IT System / Root)**: 
+  - Memiliki akses penuh ke [Django Admin Interface](/django-admin/).
+  - Mengelola seluruh basis data (Users, Students, Examiners, Groups, Evaluations).
+  - Melakukan **Import & Export Data** (Student & Examiner) via CSV.
+  - Reset password pengguna secara langsung.
+  - Mengelola izin teknis (`is_staff`, `is_superuser`).
+
+- **Admin (Panitia Pendaftaran)**: 
+  - Mengelola operasional harian melalui [Admin Dashboard](/admin/dashboard/).
+  - Melakukan verifikasi pendaftar.
+  - Membuat akun Penguji (Examiner) secara manual.
+  - Mengelola pengelompokan (Grouping) mahasiswa untuk ujian.
+  - Mempublikasikan hasil seleksi akhir.
+
+- **Examiner (Penguji/Ustadz)**: 
+  - Mengakses [Examiner Dashboard](/examiner/dashboard/).
+  - Melihat daftar kelompok dan mahasiswa yang ditugaskan.
+  - Melakukan input nilai ujian (Tahfizh) secara real-time.
+
+- **Student (Mahasiswa)**: 
+  - Melakukan registrasi mandiri dan aktivasi via email.
+  - Mengisi formulir pendaftaran beasiswa.
+  - Memantau status pendaftaran dan melihat hasil akhir seleksi.
 
 ---
 
-## 3. Alur Pengajuan & Verifikasi Beasiswa
-Mahasiswa yang sudah aktif harus melengkapi profil beasiswa.
-
-1. **Pengisian Formulir (`/apply`)**:
-   - Mahasiswa memasukkan data diri: NIM, IPK, Semester, Jumlah Juz, dll.
-   - Data otomatis tersimpan dalam status **Proses**.
-2. **Verifikasi Panitia (Admin Dashboard)**:
-   - Admin memeriksa data mahasiswa di menu **Verifikasi Data**.
-   - Admin melakukan verifikasi berkas/data.
-   - **Status Mahasiswa**: `Verified` (Hanya yang terverifikasi yang bisa dikelompokkan dan diuji).
+## 2. Alur Registrasi & Aktivasi (Student)
+1. **Pendaftaran**: Mahasiswa mengisi form registrasi di `/register/`.
+2. **Status Awal**: Akun berstatus `Inactive` (tidak bisa login).
+3. **Verifikasi Email**: Sistem mengirimkan email dengan link aktivasi unik.
+4. **Aktivasi**: Mahasiswa mengklik link tersebut, status akun berubah menjadi `Active`.
 
 ---
 
-## 4. Manajemen Penguji & Kelompok (Admin Dashboard)
+## 3. Alur Pengajuan Beasiswa
+1. **Pengisian Form**: Mahasiswa login dan mengisi data (NIM, IPK, Semester, Jumlah Juz, dsb) di `/apply/`.
+2. **Konfirmasi**: Mahasiswa menerima email konfirmasi bahwa data telah diterima.
+3. **Status Seleksi**: Secara default, mahasiswa masuk ke status **Proses**.
 
-1.  **Pembuatan Akun Penguji**:
-    -   Admin membuat akun Penguji secara manual di Dashboard.
-    -   **Ketentuan**: Email harus menggunakan domain `@app.ocm`.
-    -   Sistem otomatis membuatkan User dengan role `examiner`.
-2.  **Manajemen Kelompok (Grouping)**:
-    -   Admin membuat kelompok ujian melalui menu **Buat Kelompok**.
-    -   Admin menentukan **Nama Kelompok**, memilih **Penguji**, dan melampirkan link komunikasi (**WhatsApp** & **GMeet**).
-    -   Admin memilih mahasiswa yang sudah `Verified` untuk dimasukkan ke kelompok.
+---
+
+## 4. Alur Verifikasi & Manajemen Admin/Super Admin
+1. **Verifikasi Data**: Admin/Super Admin memvalidasi berkas di menu **Verifikasi**.
+2. **Import Data (Optional)**: Super Admin dapat melakukan import data mahasiswa atau penguji dalam jumlah banyak melalui `/django-admin/`.
+3. **Pembuatan Penguji**: Admin membuat akun penguji melalui dashboard atau super admin meng-import-nya.
+4. **Pembentukan Kelompok (Grouping)**:
+   - Admin/Super Admin membuat kelompok ujian.
+   - Menentukan Penguji dan melampirkan link komunikasi (WhatsApp/GMeet).
+   - Memilih Mahasiswa yang sudah `Verified` untuk dimasukkan ke kelompok.
+   - Sistem mengirimkan email notifikasi penugasan ke Mahasiswa.
 
 ---
 
 ## 5. Alur Ujian & Penilaian (Examiner)
-
-1.  **Input Nilai**:
-    -   Penguji login dan melihat daftar kelompok serta mahasiswa di Dashboard-nya.
-    -   Penguji memberikan skor (0-100) untuk kriteria:
-        -   Makhorijul Huruf
-        -   Tajwid
-        -   Kelancaran
-2.  **Perhitungan Otomatis (WSM)**:
-    -   Sistem menghitung **WSM Score** secara otomatis saat nilai disimpan.
-    -   **Kriteria & Bobot (20% masing-masing)**:
-        1. Makhorijul Huruf (Input Penguji)
-        2. Tajwid (Input Penguji)
-        3. Kelancaran (Input Penguji)
-        4. Jumlah Hafalan (Normalisasi: `Juz / 30 * 100`)
-        5. IPK (Normalisasi: `IPK / 4.0 * 100`)
+1. **Evaluasi**: Penguji login, memilih mahasiswa dari kelompoknya, dan mengklik **Input Nilai**.
+2. **Variabel Penilaian**:
+   - Makhorijul Huruf (0-100)
+   - Tajwid (0-100)
+   - Kelancaran (0-100)
+3. **Perhitungan Otomatis (Weighted Sum Model - WSM)**:
+   Sistem menghitung skor akhir (Weighted Score) secara otomatis berdasarkan bobot:
+   - **Makhorijul Huruf**: 20%
+   - **Tajwid**: 20%
+   - **Kelancaran**: 20%
+   - **Jumlah Hafalan**: 20% (Normalisasi: `(Juz / 30) * 100`)
+   - **IPK**: 20% (Normalisasi: `(IPK / 4.0) * 100`)
 
 ---
 
-## 6. Pengumuman Hasil (Admin Dashboard)
+## 6. Pengumuman Hasil
+1. **Publikasi**: Admin/Super Admin menekan tombol **Umumkan Hasil** di dashboard.
+2. **Notifikasi**: Sistem mengirimkan email hasil seleksi ke seluruh mahasiswa.
+3. **Visualisasi**: Mahasiswa dapat melihat detail skor dan keputusan kelulusan di dashboard masing-masing.
 
-1.  **Monitoring**:
-    -   Admin memantau jumlah evaluasi yang masuk melalui statistik dashboard.
-2.  **Publikasi**:
-    -   Admin menekan tombol **Umumkan Hasil**.
-    -   Semua skor seleksi akan diterbitkan dan dapat dilihat oleh mahasiswa.
-3.  **Visualisasi Mahasiswa**:
-    -   Mahasiswa login ke dashboard dan melihat hasil seleksi akhir mereka.
+---
+
+## 7. Fitur Tambahan Super Admin
+- **Custom Admin UI**: Menggunakan tema *Django Unfold* untuk antarmuka yang modern.
+- **Bulk Actions**: Aktivasi/Non-aktivasi pengguna secara massal.
+- **Data Integrity**: Menjamin sinkronisasi antara model `User` dan profil terkait (`Student`/`Examiner`).
+- **Template Management**: Menyediakan template CSV untuk import data skala besar.

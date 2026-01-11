@@ -72,7 +72,7 @@ class Evaluation(models.Model):
         'hafal dengan baik': 0.20,
         'makhorijul_huruf': 0.20,
         'tajwid': 0.20,
-        'kelancar': 0.20,
+        'lancar': 0.20,
         'jumlah_hafalan': 0.20,
         'ipk': 0.20
     }
@@ -89,6 +89,7 @@ class Evaluation(models.Model):
         if norm_hafalan > 100: norm_hafalan = 100 # cap at 100 if somehow more?
 
         self.wsm_score = (
+            (self.student.jumlah_hafalan * self.WEIGHTS['hafal dengan baik']) +
             (self.makhorijul_huruf * self.WEIGHTS['makhorijul_huruf']) +
             (self.tajwid * self.WEIGHTS['tajwid']) +
             (self.lancar * self.WEIGHTS['lancar']) +
